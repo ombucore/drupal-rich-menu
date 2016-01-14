@@ -1,0 +1,5 @@
+name = Rich Menu
+description = Provides UI for converting menus into structured tile containers.
+core = 7.x
+package = OMBU
+project path = sites/all/modules/custom

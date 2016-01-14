@@ -1,0 +1,210 @@
+<?php
+/**
+ * @file
+ * Code for the rich_menu module.
+ */
+
+/**
+ * Implements hook_form_alter().
+ * @TODO prevent a menu with children from being saved as a rich menu
+ *   ...display message asking to flatten menu first?
+ */
+function rich_menu_form_alter(&$form, &$form_state, $form_id) {
+  // kpr($form);
+  switch ($form_id) {
+    case 'menu_edit_menu':
+      $menu_name = $form['old_name']['#value'];
+      $rich_menu_status = rich_menu_get_status($menu_name);
+
+      $form['rich_menu_status'] = array(
+        '#type' => 'checkbox',
+        '#title' => 'Make Rich Menu',
+        '#description' => 'Check to create expandable menu capable of holding tiles.',
+        '#default_value' => $rich_menu_status,
+      );
+
+      $form['#submit'][] = 'rich_menu_form_submit';
+      // Check for an existing record
+
+    break;
+
+    case 'menu_edit_item':
+      $menu_name = $form['original_item']['#value']['menu_name'];
+      $rich_menu_status = rich_menu_get_status($menu_name);
+      kpr($form);
+      // Hide parent select list to prevent children
+      if (!empty($rich_menu_status)) {
+        $form['parent']['#access'] = FALSE;
+      }
+
+      // @TODO Also hide rich menus from parent select lists on other menu link edit item pages
+    break;
+
+    case 'menu_overview_form':
+      $menu_name = $form['#menu']['menu_name'];
+      $rich_menu_status = rich_menu_get_status($menu_name);
+
+      // Hide parent select list to prevent children
+      if (!empty($rich_menu_status)) {
+        // add validation
+        $form['#validate'][] = 'rich_menu_form_validate';
+      }
+
+      // kpr($form_state);
+      // die;
+
+    break;
+
+  }
+}
+
+/**
+ * Validation handler for menu overview form
+ */
+function rich_menu_form_validate($form, &$form_state) {
+  // @TODO Needs a bit more work...
+  $menu_items = array();
+  foreach ($form_state['values'] as $key => $value) {
+    $pos = strpos($key, 'mlid:');
+    if ($pos !== FALSE) {
+      $menu_items[] = $form_state['values'][$key];
+    }
+  }
+
+  // Iterate through all form items
+  $error_count = 0;
+  foreach ($menu_items as $item) {
+    if($item['plid'] != '0') {
+      $error_count++;
+    }
+    kpr($item);
+  }
+
+  if ($error_count > 0) {
+    form_set_error($name = '#menu', 'A rich menu cannot have nested children, please adjust the menu settings and try again.');
+  }
+
+}
+
+
+/**
+ * Submit handler for menu edit form
+ */
+function rich_menu_form_submit($form, &$form_state) {
+  // if rich menu is checked, save value to database
+  // kpr($form_state);
+  // die;
+  $rich_menu_status = $form_state['values']['rich_menu_status'];
+  $menu_name = $form_state['values']['menu_name'];
+  // @TODO - should I check to see if menu_name changed?
+
+  // Check for an existing record
+  $rich_menu_exists = db_query("SELECT menu_name from {rich_menu} WHERE menu_name = :name", array(
+    ':name' => $menu_name,
+  ))->fetch();
+
+  // If rich_menu exists update the record
+  if (!empty($rich_menu_exists->menu_name)) {
+    // Add value to database
+    db_update('rich_menu')
+      ->fields(array(
+      'status' => $rich_menu_status,
+      ))
+      ->condition('menu_name', $menu_name)
+      ->execute();
+  } else {
+    // Add value to database
+    db_insert('rich_menu')
+      ->fields(array(
+      'menu_name' => $menu_name,
+      'status' => $rich_menu_status,
+      ))
+      ->execute();
+  }
+}
+
+
+/**
+ * Implements hook_block_info()
+ */
+function rich_menu_block_info() {
+  // Get all rich menus
+  $rich_menus = rich_menu_get_rich_menus();
+  $blocks = array();
+  if (!empty($rich_menus)) {
+    foreach($rich_menus as $menu) {
+      $menu_name = $menu['menu_name'];
+
+      $blocks['rich-menu-' . $menu_name] = array(
+        'info' => $menu_name,
+        'cache' => DRUPAL_CACHE_PER_PAGE,
+      );
+    }
+  }
+
+  return $blocks;
+  // Foreach rich menu create block
+}
+
+/**
+ * Implements hook_block_view()
+ */
+function rich_menu_block_view($delta = '') {
+  // Get all rich menus
+  $rich_menus = rich_menu_get_rich_menus();
+  $blocks = array();
+
+  if (!empty($rich_menus)) {
+    foreach($rich_menus as $menu) {
+      $menu_name = $menu['menu_name'];
+
+      $blocks['rich-menu-' . $menu_name] = array(
+        'subject' => $menu_name,
+        'content' => rich_menu_block_render($menu_name),
+      );
+    }
+  }
+
+  return $blocks;
+}
+
+
+/**
+ * Callback function to render rich menu blocks
+ */
+function rich_menu_block_render($menu_name) {
+  // get each menu item and create a bean container
+  $build = array();
+
+  $build['#markup'] = "<div class='test'>YOOOOO</div>";
+
+  return $build;
+
+}
+
+
+/**
+ * Helper function to get rich menu status
+ * @param string $menu_name - machine name of menu
+ * @return bool - true if rich menu
+ */
+function rich_menu_get_status($menu_name) {
+  $rich_menu = db_query("SELECT status from {rich_menu} WHERE menu_name = :name", array(
+    ':name' => $menu_name,
+  ))->fetch();
+  if (!empty($rich_menu->status)) {
+    return TRUE;
+  }
+
+  return FALSE;
+
+}
+
+/**
+ * Helper function to get all active rich menus
+ */
+function rich_menu_get_rich_menus() {
+  $rich_menus = db_query("SELECT menu_name from {rich_menu} WHERE status = 1")->fetchAll(PDO::FETCH_ASSOC);
+  return $rich_menus;
+
+}
