@@ -4,6 +4,35 @@
  * Code for the rich_menu module.
  */
 
+
+ /**
+  * Implements hook_menu().
+  */
+ function rich_menu_menu() {
+  //  $items = array();
+   //
+  //  // Menu item exists so contextual links will show up, but hidden by default
+  //  // since it's simply a page redirect to tiles edit screen.
+  //  // @TODO update for use with menu items?
+  //  $items['admin/structure/rich-menu'] = array(
+  //    'title' => 'Add block to section',
+  //    'page callback' => 'rich_menu_add_tile',
+  //    'access arguments' => array('arrange tiles'),
+  //    'hidden' => TRUE,
+  //  );
+  //  $items['admin/structure/section/%'] = array(
+  //    'title' => 'Add block to section',
+  //    'page callback' => 'rich_menu_add_tile',
+  //    'page arguments' => array(3, 4),
+  //    'type' => MENU_LOCAL_ACTION,
+  //    'context' => MENU_CONTEXT_INLINE,
+  //    'access arguments' => array('arrange tiles'),
+  //  );
+   //
+  //  return $items;
+ }
+
+
 /**
  * Implements hook_form_alter().
  * @TODO prevent a menu with children from being saved as a rich menu
@@ -160,26 +189,12 @@ function rich_menu_block_view($delta = '') {
 
       $blocks['rich-menu-' . $menu_name] = array(
         'subject' => $menu_name,
-        'content' => rich_menu_block_render($menu_name),
+        'content' => rich_menu_block_render(),
       );
     }
   }
 
   return $blocks;
-}
-
-
-/**
- * Callback function to render rich menu blocks
- */
-function rich_menu_block_render($menu_name) {
-  // get each menu item and create a bean container
-  $build = array();
-
-  $build['#markup'] = "<div class='test'>YOOOOO</div>";
-
-  return $build;
-
 }
 
 
@@ -207,4 +222,123 @@ function rich_menu_get_rich_menus() {
   $rich_menus = db_query("SELECT menu_name from {rich_menu} WHERE status = 1")->fetchAll(PDO::FETCH_ASSOC);
   return $rich_menus;
 
+}
+
+/**
+ * Implements hook_tiles_container_info().
+ */
+function rich_menu_tiles_container_info() {
+  return array(
+    // @TODO bring add class after errors are fixed.
+    // 'section' => 'TilesRichMenuContainer',
+  );
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function rich_menu_theme($existing, $type, $theme, $path) {
+  return array(
+    'rich_menu_navigation' => array(
+      'variables' => array('items' => NULL),
+    ),
+    'rich_menu' => array(
+      // Need to use element as the variable in order to attach contextual links
+      // properly, since contextual_preprocess() expects a #contextual_links key
+      // on the first variable in the calling theme.
+      'variables' => array('element' => NULL, 'tiles' => NULL),
+      'template' => 'rich-menu',
+    ),
+  );
+}
+
+/**
+ * Preprocess function for rich-menu.tpl.php.
+ * @TODO update for rich_menu
+ *  - what should the selector be?
+ */
+function template_preprocess_rich_menu(&$variables) {
+  // $element = $variables['element'];
+  //
+  // $variables['section_title'] = $element['section'];
+  // $variables['title_visible'] = $element['settings']['visible'];
+  // $variables['id'] = drupal_clean_css_identifier($element['section']);
+  //
+  // $selector = $element['node']->nid . '-' . $element['id'];
+  // $variables['selector'] = $selector;
+
+  $build = array('content' => array());
+
+  // Load up any blocks that have been added to this section through tiles.
+  $container = tiles_get_container('rich_menu');
+  $layout = $container->getLayout($selector);
+  $container->buildPage($build, $layout);
+
+  // Get tiles width for each block.
+  foreach (element_children($build['content']) as $block_key) {
+    // Only set the width of the block if it is not already set.
+    if (isset($tiles[$block_key]['#block']->width)) {
+      $block = $tiles[$block_key]['#block'];
+      $tiles[$block_key]['#block']->width = tiles_get_width($block->module, $block->delta);
+    }
+  }
+
+  $container->wrapRegion($build['content']);
+
+  $variables['tiles'] = $build['content'];
+}
+
+
+/**
+ * Callback function to render rich menu blocks
+ */
+function rich_menu_block_render() {
+  // get each menu item and create a bean container
+  // @TODO update for rich_menu
+  //
+  // $element[$delta] = array(
+  //   '#theme' => 'tiles_section',
+  //   '#element' => array(
+  //     'node' => $entity,
+  //     'section' => $item['value'],
+  //     'id' => $item['id'],
+  //     'visible' => $item['settings']['visible'],
+  //     'settings' => $item['settings'],
+  //     '#contextual_links' => array(
+  //       'tiles_section' => array('admin/structure/section', array($entity->nid, $item['id'])),
+  //     ),
+  //   ),
+  // );
+
+}
+
+
+
+/**
+ * Page callback.
+ *
+ * Redirects user to appropriate tiles add block screen.
+ * @TODO update for rich_menu
+ */
+function rich_menu_add_tile($node, $section) {
+  $selector = $node->nid . '-' . $section;
+
+  // Keep user in overlay.
+  $url = 'admin/tiles/add/section/' . $selector;
+  if (module_exists('overlay') && overlay_get_mode() == 'child') {
+    // Fix Safari bug that improperly redirects destination if destination is
+    // the front page (e.g. node/1 will be redirected to / but loose overlay
+    // context).
+    if ($_GET['destination'] == variable_get('site_frontpage', '')) {
+      $_GET['destination'] = '<front>';
+    }
+    overlay_close_dialog($_GET['destination'], array(
+      'fragment' => 'overlay=' . urlencode($url . '?destination=' . $_GET['destination']),
+      'absolute' => TRUE,
+    ));
+  }
+  else {
+    drupal_goto($url, array('query' => array('destination' => $_GET['destination'])));
+  }
 }
