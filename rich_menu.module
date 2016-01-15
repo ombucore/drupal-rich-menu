@@ -60,7 +60,7 @@ function rich_menu_form_alter(&$form, &$form_state, $form_id) {
     case 'menu_edit_item':
       $menu_name = $form['original_item']['#value']['menu_name'];
       $rich_menu_status = rich_menu_get_status($menu_name);
-      kpr($form);
+      //kpr($form);
       // Hide parent select list to prevent children
       if (!empty($rich_menu_status)) {
         $form['parent']['#access'] = FALSE;
@@ -106,7 +106,7 @@ function rich_menu_form_validate($form, &$form_state) {
     if($item['plid'] != '0') {
       $error_count++;
     }
-    kpr($item);
+    //kpr($item);
   }
 
   if ($error_count > 0) {
@@ -231,7 +231,7 @@ function rich_menu_get_rich_menus() {
 function rich_menu_tiles_container_info() {
   return array(
     // @TODO bring add class after errors are fixed.
-    'section' => 'TilesRichMenuContainer',
+    'rich_menu' => 'TilesRichMenuContainer',
   );
 }
 
@@ -250,17 +250,18 @@ function rich_menu_theme($existing, $type, $theme, $path) {
     ),
     'rich_menu' => array(
       'variables' => array('items' => array()),
+      'template' => 'rich-menu',
     ),
   );
 }
 
 
 /**
- * Preprocess function for rich-menu.tpl.php.
+ * Preprocess function for rich-menu_item.tpl.php.
  */
 function template_preprocess_rich_menu_item(&$variables) {
-  die;
-  $selector = $item->mlid;
+  $item = $variables['element']['item'];
+  $selector = $item['link']['mlid'];
   $variables['selector'] = $selector;
 
   $build = array('content' => array());
@@ -282,6 +283,8 @@ function template_preprocess_rich_menu_item(&$variables) {
   $container->wrapRegion($build['content']);
 
   $variables['tiles'] = $build['content'];
+
+  //kpr($variables);
 }
 
 

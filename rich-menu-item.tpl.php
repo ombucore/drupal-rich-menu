@@ -3,13 +3,14 @@
 /**
  *
  * @file
- * Default theme implementation to display a section within a sectioned page.
+ * Default theme implementation to display a rich menu item.
  *
  * Available variables:
- * - $section_title: Title of section
+ * - $element: Title of section
  * - $tiles: render array of available tiles.
  *
  */
+//kpr($element);
 ?>
 <?php
 if (!empty($section_title) && $title_visible) {
@@ -28,12 +29,11 @@ if (!empty($section_title) && $title_visible) {
     </div>
   </div>
   <div class="container content" data-name="content" data-type="section" data-tiles-selector="<?php print $selector ?>">
-    <?php print render($tiles) ?>
+    <?php print render($tiles); ?>
   </div>
   <div class="container footer">
     <div class="row">
       <div class="block col-xs-12 col-sm-12 col-md-12 col-lg-12">
-        <p class="top-link"><a href="#wrap">Back to top</a></p>
       </div>
     </div>
   </div>
