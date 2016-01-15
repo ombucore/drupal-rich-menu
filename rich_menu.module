@@ -14,22 +14,22 @@
   //  // Menu item exists so contextual links will show up, but hidden by default
   //  // since it's simply a page redirect to tiles edit screen.
   //  // @TODO update for use with menu items?
-  //  $items['admin/structure/rich-menu'] = array(
-  //    'title' => 'Add block to section',
-  //    'page callback' => 'rich_menu_add_tile',
-  //    'access arguments' => array('arrange tiles'),
-  //    'hidden' => TRUE,
-  //  );
-  //  $items['admin/structure/section/%'] = array(
-  //    'title' => 'Add block to section',
-  //    'page callback' => 'rich_menu_add_tile',
-  //    'page arguments' => array(3, 4),
-  //    'type' => MENU_LOCAL_ACTION,
-  //    'context' => MENU_CONTEXT_INLINE,
-  //    'access arguments' => array('arrange tiles'),
-  //  );
-   //
-  //  return $items;
+   $items['admin/structure/rich-menu'] = array(
+     'title' => 'Add block to section',
+     'page callback' => 'rich_menu_add_tile',
+     'access arguments' => array('arrange tiles'),
+     'hidden' => TRUE,
+   );
+   $items['admin/structure/rich-menu/%'] = array(
+     'title' => 'Add block to section',
+     'page callback' => 'rich_menu_add_tile',
+     'page arguments' => array(3),
+     'type' => MENU_LOCAL_ACTION,
+     'context' => MENU_CONTEXT_INLINE,
+     'access arguments' => array('arrange tiles'),
+   );
+
+   return $items;
  }
 
 
@@ -166,7 +166,7 @@ function rich_menu_block_info() {
 
       $blocks['rich-menu-' . $menu_name] = array(
         'info' => 'Rich menu '. $menu_name,
-        'cache' => DRUPAL_CACHE_PER_PAGE,
+        'cache' => DRUPAL_CACHE_GLOBAL,
       );
     }
   }
@@ -189,7 +189,7 @@ function rich_menu_block_view($delta = '') {
       switch ($delta) {
         case 'rich-menu-' .$menu_name:
           $block['subject'] = 'Rich menu ' . $menu_name;
-          $block['content'] = rich_menu_block_render();
+          $block['content'] = rich_menu_block_render($menu_name);
         break;
       }
     }
@@ -231,7 +231,7 @@ function rich_menu_get_rich_menus() {
 function rich_menu_tiles_container_info() {
   return array(
     // @TODO bring add class after errors are fixed.
-    // 'section' => 'TilesRichMenuContainer',
+    'section' => 'TilesRichMenuContainer',
   );
 }
 
@@ -241,33 +241,27 @@ function rich_menu_tiles_container_info() {
  */
 function rich_menu_theme($existing, $type, $theme, $path) {
   return array(
-    'rich_menu_navigation' => array(
-      'variables' => array('items' => NULL),
-    ),
-    'rich_menu' => array(
+    'rich_menu_item' => array(
       // Need to use element as the variable in order to attach contextual links
       // properly, since contextual_preprocess() expects a #contextual_links key
       // on the first variable in the calling theme.
       'variables' => array('element' => NULL, 'tiles' => NULL),
-      'template' => 'rich-menu',
+      'template' => 'rich-menu-item',
+    ),
+    'rich_menu' => array(
+      'variables' => array('items' => array()),
     ),
   );
 }
 
+
 /**
  * Preprocess function for rich-menu.tpl.php.
- * @TODO update for rich_menu
- *  - what should the selector be?
  */
-function template_preprocess_rich_menu(&$variables) {
-  // $element = $variables['element'];
-  //
-  // $variables['section_title'] = $element['section'];
-  // $variables['title_visible'] = $element['settings']['visible'];
-  // $variables['id'] = drupal_clean_css_identifier($element['section']);
-  //
-  // $selector = $element['node']->nid . '-' . $element['id'];
-  // $variables['selector'] = $selector;
+function template_preprocess_rich_menu_item(&$variables) {
+  die;
+  $selector = $item->mlid;
+  $variables['selector'] = $selector;
 
   $build = array('content' => array());
 
@@ -294,26 +288,37 @@ function template_preprocess_rich_menu(&$variables) {
 /**
  * Callback function to render rich menu blocks
  */
-function rich_menu_block_render() {
-  // get each menu item and create a bean container
-  // @TODO update for rich_menu
-  //
-  return '<p>I am Here!</p>';
+function rich_menu_block_render($menu_name) {
+  $items = array();
 
-  // $element[$delta] = array(
-  //   '#theme' => 'tiles_section',
-  //   '#element' => array(
-  //     'node' => $entity,
-  //     'section' => $item['value'],
-  //     'id' => $item['id'],
-  //     'visible' => $item['settings']['visible'],
-  //     'settings' => $item['settings'],
-  //     '#contextual_links' => array(
-  //       'tiles_section' => array('admin/structure/section', array($entity->nid, $item['id'])),
-  //     ),
-  //   ),
-  // );
-  //
+  // Get menu children
+  $menu_children = menu_build_tree($menu_name, array(
+    'max_depth' => 1,
+  ));
+  if (!empty($menu_children)){
+    foreach ($menu_children as $child) {
+      $items[] = array(
+        'item' => $child,
+        'layout' => array(
+          '#theme' => 'rich_menu_item',
+          '#element' => array(
+            'item' => $child,
+            '#contextual_links' => array(
+              'rich_menu' => array('admin/structure/rich_menu', array($child['link']['mlid'])),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  $build = array(
+    '#theme' => 'rich_menu',
+    '#items' => $items,
+  );
+
+  return $build;
+
 
 }
 
@@ -325,11 +330,11 @@ function rich_menu_block_render() {
  * Redirects user to appropriate tiles add block screen.
  * @TODO update for rich_menu
  */
-function rich_menu_add_tile($node, $section) {
-  $selector = $node->nid . '-' . $section;
+function rich_menu_add_tile($mlid) {
+  $selector = $mlid;
 
   // Keep user in overlay.
-  $url = 'admin/tiles/add/section/' . $selector;
+  $url = 'admin/tiles/add/rich_menu/' . $selector;
   if (module_exists('overlay') && overlay_get_mode() == 'child') {
     // Fix Safari bug that improperly redirects destination if destination is
     // the front page (e.g. node/1 will be redirected to / but loose overlay
