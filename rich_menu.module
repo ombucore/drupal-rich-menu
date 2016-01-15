@@ -21,7 +21,7 @@
      'hidden' => TRUE,
    );
    $items['admin/structure/rich-menu/%'] = array(
-     'title' => 'Add block to section',
+     'title' => 'Add block to menu',
      'page callback' => 'rich_menu_add_tile',
      'page arguments' => array(3),
      'type' => MENU_LOCAL_ACTION,
@@ -307,7 +307,7 @@ function rich_menu_block_render($menu_name) {
           '#element' => array(
             'item' => $child,
             '#contextual_links' => array(
-              'rich_menu' => array('admin/structure/rich_menu', array($child['link']['mlid'])),
+              'rich_menu' => array('admin/structure/rich-menu', array($child['link']['mlid'])),
             ),
           ),
         ),
