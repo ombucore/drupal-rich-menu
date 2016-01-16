@@ -120,9 +120,6 @@ function rich_menu_form_validate($form, &$form_state) {
  * Submit handler for menu edit form
  */
 function rich_menu_form_submit($form, &$form_state) {
-  // if rich menu is checked, save value to database
-  // kpr($form_state);
-  // die;
   $rich_menu_status = $form_state['values']['rich_menu_status'];
   $menu_name = $form_state['values']['menu_name'];
   // @TODO - should I check to see if menu_name changed?
@@ -298,6 +295,7 @@ function rich_menu_block_render($menu_name) {
   $menu_children = menu_build_tree($menu_name, array(
     'max_depth' => 1,
   ));
+  kpr($menu_children);
   if (!empty($menu_children)){
     foreach ($menu_children as $child) {
       $items[] = array(
