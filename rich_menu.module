@@ -53,20 +53,22 @@ function rich_menu_form_alter(&$form, &$form_state, $form_id) {
       );
 
       $form['#submit'][] = 'rich_menu_form_submit';
-      // Check for an existing record
 
     break;
 
     case 'menu_edit_item':
       $menu_name = $form['original_item']['#value']['menu_name'];
       $rich_menu_status = rich_menu_get_status($menu_name);
-      //kpr($form);
       // Hide parent select list to prevent children
       if (!empty($rich_menu_status)) {
+        // Hide parent select list to prevent children
+        // @TODO Also hide rich menus from parent select lists on other menu link edit item pages
         $form['parent']['#access'] = FALSE;
+        // Hide expanded checkbox
+        $form['expanded']['#access'] = FALSE;
+
       }
 
-      // @TODO Also hide rich menus from parent select lists on other menu link edit item pages
     break;
 
     case 'menu_overview_form':
@@ -86,6 +88,74 @@ function rich_menu_form_alter(&$form, &$form_state, $form_id) {
 
   }
 }
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function rich_menu_form_menu_edit_item_alter(&$form, $form_state) {
+  $menu_name = $form['original_item']['#value']['menu_name'];
+  $rich_menu_status = rich_menu_get_status($menu_name);
+
+  if (!empty($rich_menu_status)) {
+    $item = $form['original_item']['#value'];
+    _rich_menu_menu_alter($form, $item);
+  }
+}
+
+/**
+ * Alters menu item form to include additional rich menu options.
+ *
+ * Provides the ability to disable rich_menu for rich menu items.
+ */
+function _rich_menu_menu_alter(&$form, $item) {
+  $form['options']['#tree'] = TRUE;
+  $form['options']['#weight'] = 50;
+
+  // Unset the previous value so that the new values get saved.
+  unset($form['options']['#value']['attributes']);
+  unset($form['options']['#value']['rich_menu']);
+
+  $form['options']['rich_menu'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Rich Menu Settings.'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+  );
+
+  $form['options']['rich_menu']['disable_rich_menu'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable Rich Menu?'),
+    '#description' => t('Check to disable rich menu on this menu item.'),
+    '#default_value' => isset($item['options']['rich_menu']['disable_rich_menu']) ? $item['options']['rich_menu']['disable_rich_menu'] : 0,
+  );
+
+  // Add form values for the reset of $item['options'] and
+  // $item['options']['attributes'] so the values will carry over during save.
+  foreach ($item['options'] as $key => $value) {
+    if ($key !== 'attributes' && !isset($form['options'][$key])) {
+      $form['options'][$key] = array(
+        '#type' => 'value',
+        '#value' => $value,
+      );
+    }
+  }
+
+  if (isset($item['options']['rich_menu'])) {
+    foreach ($item['options']['rich_menu'] as $key => $value) {
+      if (!isset($form['options']['rich_menu'][$key])) {
+        $form['options']['rich_menu'][$key] = array(
+          '#type' => 'value',
+          '#value' => $value,
+        );
+      }
+    }
+  }
+}
+
+
+
 
 /**
  * Validation handler for menu overview form
@@ -280,8 +350,6 @@ function template_preprocess_rich_menu_item(&$variables) {
   $container->wrapRegion($build['content']);
 
   $variables['tiles'] = $build['content'];
-
-  //kpr($variables);
 }
 
 
@@ -297,10 +365,17 @@ function rich_menu_block_render($menu_name) {
   ));
   if (!empty($menu_children)){
     foreach ($menu_children as $child) {
+
+      if (!empty($child['link']['options']['rich_menu']['disable_rich_menu'])) {
+        $theme = '';
+      } else {
+        $theme = 'rich_menu_item';
+      }
+
       $items[] = array(
         'item' => $child,
         'layout' => array(
-          '#theme' => 'rich_menu_item',
+          '#theme' => $theme,
           '#element' => array(
             'item' => $child,
             '#contextual_links' => array(

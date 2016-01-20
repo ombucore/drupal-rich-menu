@@ -10,7 +10,6 @@
  * - $tiles: render array of available tiles.
  *
  */
-//kpr($element);
 ?>
 <?php
 if (!empty($section_title) && $title_visible) {

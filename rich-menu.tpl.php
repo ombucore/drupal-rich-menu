@@ -9,7 +9,6 @@
  * - $items: Rich menu items
  *
  */
-//kpr($items);
 ?>
 
 <div data-type="region-container" data-name="rich-menu">
@@ -19,7 +18,11 @@
       <div role="navigation" data-type="region" data-name="dropdown-menu">
         <ul class="rich-menu">
           <?php foreach ($items as $item): ?>
-            <li>
+            <li
+            <?php if (!empty($item['item']['link']['options']['rich_menu']['disable_rich_menu'])): ?>
+              <?php print " class='disable-rich-menu'"; ?>
+            <?php endif; ?>
+            >
               <a
               class="panel-link <?php print drupal_html_class($item['item']['link']['link_title']); ?>"
               data-path="<?php print drupal_html_class($item['item']['link']['link_title'])?>"
