@@ -366,24 +366,26 @@ function rich_menu_block_render($menu_name) {
   if (!empty($menu_children)){
     foreach ($menu_children as $child) {
 
-      if (!empty($child['link']['options']['rich_menu']['disable_rich_menu'])) {
-        $theme = '';
-      } else {
-        $theme = 'rich_menu_item';
-      }
-
-      $items[] = array(
+      $item = array(
         'item' => $child,
-        'layout' => array(
-          '#theme' => $theme,
+      );
+
+      if (empty($child['link']['options']['rich_menu']['disable_rich_menu'])) {
+        $item['layout'] = array(
+          '#theme' => 'rich_menu_item',
           '#element' => array(
             'item' => $child,
             '#contextual_links' => array(
               'rich_menu' => array('admin/structure/rich-menu', array($child['link']['mlid'])),
             ),
           ),
-        ),
-      );
+        );
+      }
+      else {
+        $item['layout'] = array();
+      }
+
+      $items[] = $item;
     }
   }
 
