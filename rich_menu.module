@@ -392,6 +392,7 @@ function rich_menu_block_render($menu_name) {
   $build = array(
     '#theme' => 'rich_menu',
     '#items' => $items,
+    '#menu_name' => $menu_name,
   );
 
   return $build;
