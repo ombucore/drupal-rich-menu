@@ -17,6 +17,16 @@ if (!empty($section_title) && $title_visible) {
 }
 ?>
 <div data-type="region" data-name="rich_menu" class="<?php print $classes ?>" id="<?php print $id ?>"<?php print $attributes ?>>
+  <div class="container header">
+    <div class="row">
+      <div class="header block col-xs-12 col-sm-12 col-md-12 col-lg-12">
+        <?php if (!empty($section_title) && $title_visible): ?>
+          <h2><?php print $section_title ?></h2>
+        <?php endif; ?>
+        <?php print render($title_suffix) ?>
+      </div>
+    </div>
+  </div>
   <div class="container content" data-name="content" data-type="rich_menu" data-tiles-selector="<?php print $selector ?>">
     <?php print render($tiles); ?>
   </div>
