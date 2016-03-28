@@ -15,13 +15,13 @@
   //  // since it's simply a page redirect to tiles edit screen.
   //  // @TODO update for use with menu items?
    $items['admin/structure/rich-menu'] = array(
-     'title' => 'Add block to section',
+     'title' => 'Add tile to section',
      'page callback' => 'rich_menu_add_tile',
      'access arguments' => array('arrange tiles'),
      'hidden' => TRUE,
    );
    $items['admin/structure/rich-menu/%'] = array(
-     'title' => 'Add block to menu',
+     'title' => 'Add tile to menu',
      'page callback' => 'rich_menu_add_tile',
      'page arguments' => array(3),
      'type' => MENU_LOCAL_ACTION,
