@@ -362,6 +362,9 @@ function rich_menu_block_render($menu_name) {
   // Get menu children
   $menu_children = menu_build_tree($menu_name, array(
     'max_depth' => 1,
+    'conditions' => array(
+      'hidden' => 0,
+    ),
   ));
   if (!empty($menu_children)){
     foreach ($menu_children as $child) {
