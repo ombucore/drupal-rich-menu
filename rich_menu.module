@@ -255,7 +255,7 @@ function rich_menu_block_view($delta = '') {
       $menu_name = $menu['menu_name'];
       switch ($delta) {
         case 'rich-menu-' .$menu_name:
-          $block['subject'] = $menu_name;
+          $block['subject'] = '';
           $block['content'] = rich_menu_block_render($menu_name);
         break;
       }
