@@ -17,17 +17,17 @@ if (!empty($section_title) && $title_visible) {
 }
 if (!empty($col)) {
   if ($col == 1) {
-    $classes .= ' block col-xs-3 col-sm-3 col-md-3 col-lg-3';
+    $classes .= ' new-rich-menu-option-column-1';
   }
   if ($col == 2) {
-    $classes .= ' block col-xs-6 col-sm-6 col-md-6 col-lg-6';
+    $classes .= ' new-rich-menu-option-column-2';
   }
   if ($col == 3) {
-    $classes .= ' block col-xs-12 col-sm-12 col-md-12 col-lg-12';
+    $classes .= ' new-rich-menu-option-column-3';
   }
 }
 else {
-  $classes .= ' block col-xs-12 col-sm-12 col-md-12 col-lg-12';
+  $classes .= ' new-rich-menu-option-column-3';
 }
 ?>
 <div data-type="region" data-name="rich_menu" class="<?php print $classes ?>" id="<?php print $id ?>"<?php print $attributes ?>>
