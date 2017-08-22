@@ -131,6 +131,18 @@ function _rich_menu_menu_alter(&$form, $item) {
     '#default_value' => isset($item['options']['rich_menu']['disable_rich_menu']) ? $item['options']['rich_menu']['disable_rich_menu'] : 0,
   );
 
+  $form['options']['rich_menu']['column'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of columns'),
+    '#options' => array(
+      1 => t('1'),
+      2 => t('2'),
+      3 => t('3'),
+    ),
+    '#description' => t('3 columns is full width of the page.'),
+    '#default_value' => isset($item['options']['rich_menu']['column']) ? $item['options']['rich_menu']['column'] : 1,
+  );
+
   // Add form values for the reset of $item['options'] and
   // $item['options']['attributes'] so the values will carry over during save.
   foreach ($item['options'] as $key => $value) {
@@ -312,7 +324,7 @@ function rich_menu_theme($existing, $type, $theme, $path) {
       // Need to use element as the variable in order to attach contextual links
       // properly, since contextual_preprocess() expects a #contextual_links key
       // on the first variable in the calling theme.
-      'variables' => array('element' => NULL, 'tiles' => NULL),
+      'variables' => array('element' => NULL, 'tiles' => NULL, 'col' => NULL),
       'template' => 'rich-menu-item',
     ),
     'rich_menu' => array(
@@ -328,6 +340,7 @@ function rich_menu_theme($existing, $type, $theme, $path) {
  */
 function template_preprocess_rich_menu_item(&$variables) {
   $item = $variables['element']['item'];
+  $col = $variables['element']['column'];
   $selector = $item['link']['mlid'];
   $variables['selector'] = $selector;
 
@@ -350,6 +363,7 @@ function template_preprocess_rich_menu_item(&$variables) {
   $container->wrapRegion($build['content']);
 
   $variables['tiles'] = $build['content'];
+  $variables['col'] = $col;
 }
 
 
@@ -374,10 +388,15 @@ function rich_menu_block_render($menu_name) {
       );
 
       if (empty($child['link']['options']['rich_menu']['disable_rich_menu'])) {
+        $column = 3;
+        if (!empty($child['link']['options']['rich_menu']['column'])) {
+          $column = $child['link']['options']['rich_menu']['column'];
+        }
         $item['layout'] = array(
           '#theme' => 'rich_menu_item',
           '#element' => array(
             'item' => $child,
+            'column' => $column,
             '#contextual_links' => array(
               'rich_menu' => array('admin/structure/rich-menu', array($child['link']['mlid'])),
             ),
